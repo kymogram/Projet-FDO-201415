@@ -24,6 +24,18 @@ def parse_file(file_name, L1Data, L1Addr, L1Dirt, LastUse, M):
                             LastUse,
                             M
                         )
+            elif action[0] == 'W':
+                write(
+                    int(action[1]),
+                    int(action[2]),
+                    L1Data,
+                    L1Addr,
+                    L1Dirt,
+                    LastUse,
+                    M
+                )
+            else:
+                raise ValueError("Wrong file format")
             GlobalCount += 1
         file.close()
 
@@ -55,13 +67,37 @@ def read(address, L1Data, L1Addr, L1Dirt, LastUse, M):
     return ret
 
 def write(val, address, L1Data, L1Addr, L1Dirt, LastUse, M):
+    index = -1
     for i in range(len(L1Addr)):
-        index = i
         if L1Addr[i] == address:
-            L1Data[i] = v
+            index = i
+            LastUse[index] = GlobalCount
+            L1Data[i] = val
+            save = L1Dirt[i]
             L1Dirt[i] = True
-    if index == -666:
-        pass
+            print("WR " + str(val) + " to " + str(address) + "\thit: case " + \
+                  str(index) + " (LU " + str(LastUse[index]) + ")",
+                  end='\n' if save else '\t')
+            if not save:
+                print("dirty!")
+    if index == -1:
+        M[address] = val
+        last = LastUse.index(min(LastUse))
+        if L1Dirt[last]:
+            M[L1Addr[last]] = L1Data[last]
+        save_addr = L1Addr[last]
+        L1Addr[last] = address
+        save_data = L1Data[last]
+        L1Data[last] = val
+        save = L1Dirt[last]
+        L1Dirt[last] = False
+        LastUse[last] = GlobalCount
+        print("WR " + str(val) + " to " + str(address) + "\tmiss: victime " + \
+              str(last) + " (LU " + str(LastUse[last]) + ")",
+              end='\t' if save else '\n')
+        if save:
+            print("dirty WR " + str(save_data) + " to " + str(save_addr))
+              
 
 def main(argv):
     M = [0] * MEMORY_LENGTH
@@ -71,12 +107,6 @@ def main(argv):
     L1Dirt = [False] * CACHE_LENGTH
     #step -1 can not exist
     LastUse = [-1] * CACHE_LENGTH
-
-    L1Addr[1] = 4
-    L1Data[1] = 8
-    M[4] = 8
-    M[5] = 22
-
     parse_file(argv[1], L1Data, L1Addr, L1Dirt, LastUse, M)
 
 if __name__ == "__main__":
