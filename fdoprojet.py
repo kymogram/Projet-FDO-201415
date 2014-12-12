@@ -5,7 +5,8 @@ MEMORY_LENGTH = 32
 
 GlobalCount = 1
 
-def parse_file(file_name):
+def parse_file(file_name, L1Data, L1Addr, L1Dirt, LastUse, M):
+    global GlobalCount
     try:
         file = open(file_name)
     except FileNotFoundError as error:
@@ -14,31 +15,49 @@ def parse_file(file_name):
         file_content = file.readlines()
         for line in file_content:
             action = line.strip().split(" ")
-            #handle actions
+            if action[0] == 'R':
+                read_value = read(
+                            int(action[1]),
+                            L1Data,
+                            L1Addr,
+                            L1Dirt,
+                            LastUse,
+                            M
+                        )
+            GlobalCount += 1
         file.close()
 
-def read(Address, L1Data, L1Addr, L1Dirt, M):
-    index = -666
+def read(address, L1Data, L1Addr, L1Dirt, LastUse, M):
+    index = -1
     for i in range(len(L1Addr)):
-        if L1Addr[i] == Address:
+        if L1Addr[i] == address:
             index = i
             ret = L1Data[i]
-            LastUse[Address] = GlobalCount
-            if L1Dirt[i] == True:
-                M[L1Addr[i]] = L1Data[i]
-            GlobalCount += 1
-    if index == -666:
-        ret = M[Adress]
-        last = min(LastUse, key = LastUse.index)
-        L1Addr[Last] = Address
-        L1Data[Last] = ret
-        L1Dirt[Last] = False
+            LastUse[i] = GlobalCount
+            print("RD " + str(ret) + " from " + str(address) + "\thit: " + \
+                  "case " + str(index) + " (LU " + str(LastUse[i]) + ")")
+    if index == -1:
+        ret = M[address]
+        last = LastUse.index(min(LastUse))
+        save_data = L1Data[last]
+        if L1Dirt[last]:
+            M[L1Addr[last]] = L1Data[last]
+        save = L1Dirt[last]
+        L1Dirt[last] = False
+        L1Addr[last] = address
+        L1Data[last] = ret
+        LastUse[last] = GlobalCount
+        print("RD " + str(ret) + " from " + str(address) + "\tmiss: " + \
+              "case " + str(last) + " (LU " + str(LastUse[last]) + \
+              ")", end='\t' if save else '\n')
+        if save:
+            print("dirty WR " + str(save_data) + " to " + str(ret))
     return ret
 
-def write(val, Address, L1Data, L1Addr, L1Dirt, M):
+def write(val, address, L1Data, L1Addr, L1Dirt, LastUse, M):
     for i in range(len(L1Addr)):
         index = i
-        if L1Addr[i] == Address:
+        if L1Addr[i] == address:
             L1Data[i] = v
             L1Dirt[i] = True
     if index == -666:
@@ -52,7 +71,13 @@ def main(argv):
     L1Dirt = [False] * CACHE_LENGTH
     #step -1 can not exist
     LastUse = [-1] * CACHE_LENGTH
-    parse_file(argv[1])
+
+    L1Addr[1] = 4
+    L1Data[1] = 8
+    M[4] = 8
+    M[5] = 22
+
+    parse_file(argv[1], L1Data, L1Addr, L1Dirt, LastUse, M)
 
 if __name__ == "__main__":
     main(argv)
