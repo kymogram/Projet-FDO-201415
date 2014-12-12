@@ -35,7 +35,7 @@ def parse_file(file_name, L1Data, L1Addr, L1Dirt, LastUse, M):
                     M
                 )
             else:
-                raise ValueError("Wrong file format")
+                raise ValueError()
             GlobalCount += 1
         file.close()
 
@@ -97,7 +97,6 @@ def write(val, address, L1Data, L1Addr, L1Dirt, LastUse, M):
               end='\t' if save else '\n')
         if save:
             print("dirty WR " + str(save_data) + " to " + str(save_addr))
-              
 
 def main(argv):
     M = [0] * MEMORY_LENGTH
@@ -107,7 +106,15 @@ def main(argv):
     L1Dirt = [False] * CACHE_LENGTH
     #step -1 can not exist
     LastUse = [-1] * CACHE_LENGTH
-    parse_file(argv[1], L1Data, L1Addr, L1Dirt, LastUse, M)
+    try:
+        parse_file(argv[1], L1Data, L1Addr, L1Dirt, LastUse, M)
+    except ValueError:
+        print("file given has an incorrect format. Please review it")
+    except FileNotFoundError:
+        print("file given does not exist")
 
 if __name__ == "__main__":
-    main(argv)
+    if len(argv) != 2:
+        print("(Only) a file name must be given")
+    else:
+        main(argv)
