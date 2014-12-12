@@ -1,3 +1,22 @@
+from sys import argv
+
+CACHE_LENGTH = 8
+MEMORY_LENGTH = 32
+
+GlobalCount = 1
+
+def parse_file(file_name):
+    try:
+        file = open(file_name)
+    except FileNotFoundError as error:
+        raise error
+    else:
+        file_content = file.readlines()
+        for line in file_content:
+            action = line.strip().split(" ")
+            #handle actions
+        file.close()
+
 def read(Address, L1Data, L1Addr, L1Dirt, M):
     index = -666
     for i in range(len(L1Addr)):
@@ -23,15 +42,17 @@ def write(val, Address, L1Data, L1Addr, L1Dirt, M):
             L1Data[i] = v
             L1Dirt[i] = True
     if index == -666:
-        
+        pass
 
-def main():
-    M = [-1] * 32
-    L1Data = [0] * 8
-    L1Addr = [0] * 8
-    L1Dirt = [False] * 8
-    LastUse = [0] * 8
-    GlobalCount = 0
+def main(argv):
+    M = [0] * MEMORY_LENGTH
+    L1Data = [0] * CACHE_LENGTH
+    #The address -1 can not exist
+    L1Addr = [-1] * CACHE_LENGTH
+    L1Dirt = [False] * CACHE_LENGTH
+    #step -1 can not exist
+    LastUse = [-1] * CACHE_LENGTH
+    parse_file(argv[1])
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    main(argv)
